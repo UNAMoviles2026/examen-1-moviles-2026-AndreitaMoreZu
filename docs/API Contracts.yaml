@@ -1,0 +1,170 @@
+# API Contracts 
+
+openapi: 3.0.0
+info:
+  title: Coworking Spaces API
+  description: API para gestión de reservas de espacios de coworking
+  version: 1.0.0
+
+paths:
+ 
+  # ENDPOINT 1: CREAR RESERVA (POST)
+
+  /api/reservations:
+    post:
+      summary: Crear una nueva reserva de espacio de coworking
+      description: |
+        Un usuario reserva un espacio por un rango de horas.
+        Validaciones:
+        - El espacio debe existir
+        - El horario no debe solapar otra reserva
+        - startTime debe ser futuro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - spaceId
+                - userId
+                - startTime
+                - endTime
+              properties:
+                spaceId:
+                  type: integer
+                  description: ID del espacio de coworking
+                  example: 101
+                userId:
+                  type: string
+                  description: Email o ID del usuario
+                  example: "andrea@coworking.com"
+                startTime:
+                  type: string
+                  format: date-time
+                  description: Fecha y hora de inicio (ISO 8601)
+                  example: "2026-04-25T14:00:00"
+                endTime:
+                  type: string
+                  format: date-time
+                  description: Fecha y hora de fin
+                  example: "2026-04-25T17:00:00"
+      responses:
+        '201':
+          description: Reserva creada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId:
+                    type: integer
+                    example: 5001
+                  spaceId:
+                    type: integer
+                    example: 101
+                  userId:
+                    type: string
+                    example: "andrea@coworking.com"
+                  startTime:
+                    type: string
+                    example: "2026-04-25T14:00:00"
+                  endTime:
+                    type: string
+                    example: "2026-04-25T17:00:00"
+                  totalPrice:
+                    type: number
+                    format: float
+                    description: Precio total calculado (horas × precio/hora)
+                    example: 15.00
+                  status:
+                    type: string
+                    enum: [confirmed, pending, cancelled]
+                    example: "confirmed"
+        '400':
+          description: Error en la solicitud (espacio no disponible, horario inválido)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "El espacio ya está reservado en ese horario"
+        '404':
+          description: Espacio no encontrado
+
+
+  # ENDPOINT 2: LISTAR RESERVAS (GET)
+
+  /api/reservations:
+    get:
+      summary: Listar reservas de un usuario
+      description: Obtiene todas las reservas (activas, pasadas, canceladas) de un usuario específico
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID del usuario para filtrar sus reservas
+          example: "andrea@coworking.com"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [confirmed, pending, cancelled, all]
+          description: Filtrar por estado de reserva
+          example: "confirmed"
+      responses:
+        '200':
+          description: Lista de reservas del usuario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    example: "andrea@coworking.com"
+                  total:
+                    type: integer
+                    description: Número total de reservas encontradas
+                    example: 3
+                  reservations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        reservationId:
+                          type: integer
+                          example: 5001
+                        spaceId:
+                          type: integer
+                          example: 101
+                        spaceName:
+                          type: string
+                          description: Nombre del espacio (por conveniencia)
+                          example: "Espacio Ejecutivo Centro"
+                        startTime:
+                          type: string
+                          example: "2026-04-25T14:00:00"
+                        endTime:
+                          type: string
+                          example: "2026-04-25T17:00:00"
+                        totalPrice:
+                          type: number
+                          example: 15.00
+                        status:
+                          type: string
+                          example: "confirmed"
+                        createdAt:
+                          type: string
+                          format: date-time
+                          description: Fecha de creación de la reserva
+                          example: "2026-04-20T10:30:00"
+        '400':
+          description: userId no proporcionado
+        '404':
+          description: Usuario no encontrado
