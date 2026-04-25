@@ -1,4 +1,4 @@
-package com.moviles.examenmoviles.ui.theme
+package com.moviles.unaroom.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
